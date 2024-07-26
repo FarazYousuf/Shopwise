@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "939299683365",
+    "project_id": "shopwise-1a1aa",
+    "storage_bucket": "shopwise-1a1aa.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:939299683365:android:9d2fdba5d4c988c40453cc",
+        "android_client_info": {
+          "package_name": "com.example.shop_wise"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "939299683365-4815431pb4q4jpjfgumnn2i3ums7qrg6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqX7C4T-udOmNJnDgVwqBY2WHhsoFkdvY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "939299683365-4815431pb4q4jpjfgumnn2i3ums7qrg6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "939299683365-0tlasra3gi12fpbae7g8vva4nin1jhj8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.shopwise"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

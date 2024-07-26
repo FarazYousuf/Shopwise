@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:provider/provider.dart';
 import 'package:shop_wise/common/styles/spacing_styles.dart';
 import 'package:shop_wise/utils/constants/image_strings.dart';
 import 'package:shop_wise/utils/constants/sizes.dart';
 import 'package:shop_wise/utils/constants/text_strings.dart';
 import 'package:shop_wise/utils/helpers/helper_functions.dart';
+import 'package:shop_wise/features/screens/main_screen.dart';
+import 'package:shop_wise/features/screens/signup_screen.dart';
+import 'package:shop_wise/features/authentication/providers/auth_providers.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,9 +19,136 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _isPasswordVisible = false;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+// Sign in with Email and Password
+
+  Future<void> _signInWithEmail() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      await authProvider.signInWithEmailAndPassword(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+      Navigator.of(context)
+          .pushReplacement(MaterialPageRoute(builder: (_) => MainScreen()));
+    } catch (e) {
+      print('Error signing in with email: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error signing in with email. Please try again.'),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+// Sign in with Google
+
+  // Future<void> _signInWithGoogle() async {
+  //   final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  //   try {
+  //     await authProvider.signInWithGoogle();
+  //     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => MainScreen()));
+  //   } catch (e) {
+  //     print('Error signing in with Google: $e');
+  //   }
+  // }
+
+// Recent method (Testing)
+  Future<void> _signInWithGoogle() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      await authProvider.signInWithGoogle();
+      Navigator.of(context)
+          .pushReplacement(MaterialPageRoute(builder: (_) => MainScreen()));
+    } catch (e) {
+      print('Error signing in with Google: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error signing in with Google. Please try again.'),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Sign in with Apple
+
+  // Future<void> _signInWithApple() async {
+  //   final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  //   try {
+  //     await authProvider.signInWithApple();
+  //     Navigator.of(context)
+  //         .pushReplacement(MaterialPageRoute(builder: (_) => MainScreen()));
+  //   } catch (e) {
+  //     print('Error signing in with Apple: $e');
+  //   }
+  // }
+
+  Future<void> _signInWithApple() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      await authProvider.signInWithApple();
+      Navigator.of(context)
+          .pushReplacement(MaterialPageRoute(builder: (_) => MainScreen()));
+    } catch (e) {
+      print('Error signing in with Apple: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error signing in with Apple. Please try again.'),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Pasword Reset Email
+
+  // Send Password Reset Email
+  Future<void> _sendPasswordResetEmail() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    try {
+      await authProvider.sendPasswordResetEmail(_emailController.text.trim());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Password Reset email sent.'),
+        ),
+      );
+    } catch (e) {
+      print('Error sending password reset email: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text('Error sending password eset email. Please try again.'),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    AuthProvider authProvider = Provider.of<AuthProvider>(context);
     // final dark = SHelperFunctions.isDarkMode(context);
     final bool isDarkMode = SHelperFunctions.isDarkMode(context);
 
@@ -67,14 +198,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     // Email
                     TextFormField(
+                      controller: _emailController,
                       style: inputTextStyle,
                       decoration: InputDecoration(
                         prefixIcon: Icon(Iconsax.direct_right),
                         labelText: STexts.email,
-                        labelStyle: labelTextStyle, // Set label color
-                        floatingLabelStyle: TextStyle(
-                            color:
-                                floatingLabelColor), // Set floating label color
+                        labelStyle: labelTextStyle,
+                        floatingLabelStyle:
+                            TextStyle(color: floatingLabelColor),
                         border: InputBorder.none,
                       ),
                     ),
@@ -82,15 +213,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     // Password
                     TextFormField(
+                      controller: _passwordController,
                       style: inputTextStyle,
                       obscureText: !_isPasswordVisible,
                       decoration: InputDecoration(
                         prefixIcon: Icon(Iconsax.password_check),
                         labelText: STexts.password,
-                        labelStyle: labelTextStyle, // Set label color
-                        floatingLabelStyle: TextStyle(
-                            color:
-                                floatingLabelColor), // Set floating label color
+                        labelStyle: labelTextStyle,
+                        floatingLabelStyle:
+                            TextStyle(color: floatingLabelColor),
                         border: InputBorder.none,
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -125,7 +256,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         //Forget Password
                         TextButton(
-                            onPressed: () {},
+                            onPressed: _sendPasswordResetEmail,
+                            // onPressed: () {},
                             child: const Text(STexts.forgotPassword)),
                       ],
                     ),
@@ -133,9 +265,38 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     //Sign In Button
                     SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                            onPressed: () {}, child: Text(STexts.signIn))),
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _signInWithEmail,
+                        child: _isLoading
+                            ? CircularProgressIndicator()
+                            : Text(STexts.signIn),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: SSizes.spaceBtwItems,
+                    ),
+
+                    //Create Account Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor:
+                              isDarkMode ? Colors.white : Colors.black,
+                          side: BorderSide(
+                              color: isDarkMode ? Colors.grey : Colors.grey),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => SignUpScreen()));
+                        },
+                        child: _isLoading
+                            ? CircularProgressIndicator()
+                            : Text(STexts.createAccount),
+                      ),
+                    ),
                     const SizedBox(
                       height: SSizes.spaceBtwSections,
                     )
@@ -183,7 +344,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: Border.all(color: dividerColor),
                       borderRadius: BorderRadius.circular(100)),
                   child: IconButton(
-                    onPressed: () {},
+                    // onPressed: authProvider.signInWithGoogle,
+                     onPressed: _isLoading ? null : _signInWithGoogle,
                     icon: const Image(
                       width: SSizes.iconMd,
                       height: SSizes.iconMd,
@@ -198,7 +360,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(100)),
                   child: Center(
                     child: IconButton(
-                      onPressed: () {},
+                      // onPressed: authProvider.signInWithApple,
+                       onPressed: _isLoading ? null : _signInWithApple,
                       icon: Image(
                         width: SSizes.iconMd,
                         height: SSizes.iconMd,

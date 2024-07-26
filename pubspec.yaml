@@ -26,6 +26,7 @@ dependencies:
   firebase_auth: ^5.1.2
   google_sign_in: ^6.2.1
   sign_in_with_apple: ^6.1.1
+  cloud_firestore: ^5.1.0
  
 
 
@@ -48,7 +49,7 @@ flutter:
     - assets/icons/apple_black.png
     - assets/icons/apple_white.png
     - assets/icons/google_icon.png
-    - assets/images/
+    - assets/icons/avatar_icon.png
 
 #------------------ LOCAL FONTS ----------------------#
   fonts:
