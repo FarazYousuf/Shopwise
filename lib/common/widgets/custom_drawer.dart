@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shop_wise/features/screens/login_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
+
+  
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -76,7 +78,7 @@ class CustomDrawer extends StatelessWidget {
             leading: Icon(Icons.history),
             title: Text('Scan History'),
             onTap: () {
-              // Handle navigation to Scan History
+              Navigator.pushNamed(context, '/scanHistory');
             },
           ),
           ListTile(
