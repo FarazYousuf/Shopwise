@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:shop_wise/common/widgets/dialog_utils.dart';
 import 'package:shop_wise/data/services/location_service.dart';
 import 'package:shop_wise/common/widgets/custom_market.dart';
 
@@ -11,9 +13,12 @@ class LocationPickerScreen extends StatefulWidget {
   _LocationPickerScreenState createState() => _LocationPickerScreenState();
 }
 
+final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
 class _LocationPickerScreenState extends State<LocationPickerScreen> {
   late GoogleMapController _mapController;
   LatLng _selectedLocation = LatLng(0, 0);
+  // LatLng _selectedLocation = LatLng(37.7749, -122.4194);
   String _selectedLocationName = 'Fetching address...';
   TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
@@ -25,13 +30,22 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   List<String> _suggestions = [];
   bool _isSuggestionVisible = false;
   String _regionCode = 'us';
+  // Timer? _debounce;
   // String _currentCity = '';
 
   @override
   void initState() {
     super.initState();
     _getCurrentLocation();
+    // _searchController.addListener(_onSearchChanged);
   }
+
+  // @override
+  // void dispose() {
+  //   _searchController.dispose();
+  //   if (_debounce?.isActive ?? false) _debounce?.cancel();
+  //   super.dispose();
+  // }
 
   //  @override
   // void initState() {
@@ -127,11 +141,41 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     await _updateRegionCode(position);
   }
 
+
+  // Future<void> _updateAddress(LatLng position) async {
+  //   try {
+  //     final address = await _locationService.getAddress(position);
+  //     setState(() {
+  //       _selectedLocationName = address;
+  //       _markers = {
+  //         Marker(
+  //           markerId: MarkerId('selected_location'),
+  //           position: _selectedLocation,
+  //           infoWindow: InfoWindow(title: _selectedLocationName),
+  //         ),
+  //       };
+  //     });
+  //   } catch (e) {
+  //     setState(() {
+  //       _selectedLocationName = 'Address not found';
+  //     });
+  //   }
+  // }
+
   Future<void> _updateAddress(LatLng position) async {
     try {
       final address = await _locationService.getAddress(position);
       setState(() {
-        _selectedLocationName = address;
+        if (_selectedLocationName == 'Fetching address...') {
+          _selectedLocationName = address;
+          _markers = {
+            Marker(
+              markerId: MarkerId('selected_location'),
+              position: _selectedLocation,
+              infoWindow: InfoWindow(title: _selectedLocationName),
+            ),
+          };
+        }
       });
     } catch (e) {
       setState(() {
@@ -144,7 +188,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     try {
       final address = await _locationService
           .getAddress(LatLng(position.latitude, position.longitude));
-      // You may need to parse this address to get the correct region code
       final country = _parseCountryFromAddress(address);
       final regionCode = _mapCountryToRegionCode(country);
       print('Updated region code: $regionCode');
@@ -167,8 +210,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   String _mapCountryToRegionCode(String country) {
     final countryToRegion = {
       'Pakistan': 'pk',
-      'United States': 'us',
-      'Canada': 'ca',
+      // 'United States': 'us',
+      // 'Canada': 'ca',
     };
     return countryToRegion[country] ?? 'us';
   }
@@ -177,8 +220,47 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     _mapController = controller;
   }
 
+  // void _onMarkerDragEnd(LatLng newPosition) async {
+  //   setState(() {
+  //     _selectedLocation = newPosition;
+  //   });
+
+  //   // Fetch and update the address
+  //   String address = await _fetchAddress(newPosition);
+  //   setState(() {
+  //     _selectedLocationName = address;
+  //     _searchController.text = address; // Update search bar
+  //     _markers = {
+  //       Marker(
+  //         markerId: MarkerId('selected_location'),
+  //         position: _selectedLocation,
+  //         infoWindow: InfoWindow(title: address),
+  //         draggable: true,
+  //       ),
+  //     };
+  //   });
+  // }
+
+  //  Future<String> _fetchAddress(LatLng position) async {
+  //   try {
+  //     final response = await http.get(Uri.parse(
+  //         'https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.latitude},${position.longitude}&key=AIzaSyAEKlapxJehOu3VV_2sYHv6VirpPx9VenA'));
+  //     final data = jsonDecode(response.body);
+  //     if (data['status'] == 'OK') {
+  //       final results = data['results'] as List;
+  //       if (results.isNotEmpty) {
+  //         return results[0]['formatted_address'];
+  //       }
+  //     }
+  //     return 'Address not found';
+  //   } catch (e) {
+  //     return 'Address not found';
+  //   }
+  // }
+
   void _onCameraMove(CameraPosition position) {
     _selectedLocation = position.target;
+    _updateAddress(position.target);
   }
 
   Future<void> _searchLocation(String location) async {
@@ -202,6 +284,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             infoWindow: InfoWindow(title: _selectedLocationName),
           ),
         };
+        _isSuggestionVisible = false;
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -221,6 +304,21 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       });
     }
   }
+
+  // void _onSearchChanged() {
+  //   final query = _searchController.text;
+  //   if (_debounce?.isActive ?? false) _debounce?.cancel();
+  //   _debounce = Timer(const Duration(milliseconds: 500), () {
+  //     if (query.isNotEmpty) {
+  //       _fetchSuggestions(query);
+  //     } else {
+  //       setState(() {
+  //         _suggestions = [];
+  //         _isSuggestionVisible = false;
+  //       });
+  //     }
+  //   });
+  // }
 
   Future<void> _searchLocationDialog() async {
     final location = await showDialog<String>(
@@ -293,37 +391,110 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   // }
 
   Future<void> _fetchSuggestions(String query) async {
-  try {
-    final suggestions =
-        await _locationService.searchSuggestions(query, _regionCode);
-    setState(() {
-      _suggestions = suggestions;
-      _isSuggestionVisible = suggestions.isNotEmpty;
-    });
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error fetching suggestions: $e')),
-    );
-    setState(() {
-      _suggestions = [];
-      _isSuggestionVisible = false;
-    });
+    try {
+      final suggestions =
+          await _locationService.searchSuggestions(query, _regionCode);
+      setState(() {
+        _suggestions = suggestions;
+        _isSuggestionVisible = suggestions.isNotEmpty;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching suggestions: $e')),
+      );
+      setState(() {
+        _suggestions = [];
+        _isSuggestionVisible = false;
+      });
+    }
   }
-}
 
+  // Future<void> _confirmLocation() async {
+  //   // Save selected location to Firestore
+  //   final selectedLocationData = {
+  //     'latitude': _selectedLocation.latitude,
+  //     'longitude': _selectedLocation.longitude,
+  //     'name': _selectedLocationName,
+  //   };
 
-  void _confirmLocation() {
-    Navigator.pop(context, _selectedLocation);
+  //   try {
+  //     await _firestore.collection('locations').doc('selectedLocation').set(selectedLocationData);
+  //     Navigator.pop(context, _selectedLocation);
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Error saving location: $e')),
+  //     );
+  //   }
+  // }
+
+  // Future<void> _confirmLocation() async {
+  //   // Save selected location to Firestore
+  //   final selectedLocationData = {
+  //     'latitude': _selectedLocation.latitude,
+  //     'longitude': _selectedLocation.longitude,
+  //     'name': _selectedLocationName,
+  //   };
+
+  //   try {
+  //     await _firestore
+  //         .collection('locations')
+  //         .doc('selectedLocation')
+  //         .set(selectedLocationData);
+  //     // Return the selected location name
+  //     Navigator.pop(context, _selectedLocationName);
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Error saving location: $e')),
+  //     );
+  //   }
+  // }
+
+  Future<void> _confirmLocation() async {
+    if (_selectedLocation == null || _selectedLocationName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Location or name is not set.')),
+      );
+      return;
+    }
+
+    
+    final selectedLocationData = {
+      'latitude': _selectedLocation.latitude,
+      'longitude': _selectedLocation.longitude,
+      'name': _selectedLocationName,
+    };
+
+    try {
+      // Use a unique ID or timestamp to avoid overwriting existing documents
+      final locationId = DateTime.now().millisecondsSinceEpoch.toString();
+      await _firestore
+          .collection('locations')
+          .doc(locationId)
+          .set(selectedLocationData);
+      // Return the selected location name
+      Navigator.pop(context, _selectedLocationName);
+      // _openLocationPicker();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving location: $e')),
+      );
+    }
   }
+
+ 
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDarkMode ? Colors.white : Colors.black;
-    final activeTabBackgroundColor =  isDarkMode ? Colors.grey.shade900 : Colors.black;
-    final searchBarBackgroundColor = isDarkMode ? Colors.grey.shade900 : Colors.white;
-    final suggestionBackgroundColor = isDarkMode ? Colors.grey.shade900 : Colors.white;
+    final activeTabBackgroundColor =
+        isDarkMode ? Colors.grey.shade900 : Colors.black;
+    final searchBarBackgroundColor =
+        isDarkMode ? Colors.grey.shade900 : Colors.white;
+    final suggestionBackgroundColor =
+        isDarkMode ? Colors.grey.shade900 : Colors.white;
     final suggestionTextColor = isDarkMode ? Colors.white : Colors.black;
+    final hintTextColor = isDarkMode ? Colors.white70 : Colors.black54;
 
     return Scaffold(
       appBar: AppBar(
@@ -354,6 +525,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               ? Center(child: CircularProgressIndicator())
               : GoogleMap(
                   onMapCreated: _onMapCreated,
+                  // onMarkerDragEnd: _onMarkerDragEnd,
                   initialCameraPosition: CameraPosition(
                     target: _selectedLocation,
                     zoom: 15,
@@ -393,13 +565,16 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                       child: ListView.separated(
                         itemCount: _suggestions.length,
                         separatorBuilder: (context, index) => Divider(
-                          color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
+                          color: isDarkMode
+                              ? Colors.grey.shade700
+                              : Colors.grey.shade300,
                           height: 1.0,
                         ),
                         itemBuilder: (context, index) {
                           return ListTile(
-                            title: Text(_suggestions[index],
-                            style: TextStyle(color: suggestionTextColor),
+                            title: Text(
+                              _suggestions[index],
+                              style: TextStyle(color: suggestionTextColor),
                             ),
                             onTap: () {
                               _searchController.text = _suggestions[index];
@@ -447,7 +622,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                 },
                 decoration: InputDecoration(
                   hintText: 'Search Location',
-                  hintStyle: TextStyle(color: Colors.black.withOpacity(0.7)),
+                  hintStyle: TextStyle(color: hintTextColor),
                   suffixIcon: IconButton(
                     icon: Icon(Icons.search, color: textColor),
                     onPressed: () {

@@ -4,6 +4,7 @@ import 'package:shop_wise/common/widgets/custom_navbar.dart';
 import 'package:shop_wise/features/screens/suggestion_screen.dart';
 import 'package:shop_wise/common/widgets/custom_drawer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:shop_wise/features/screens/location_picker.dart';
 
 class MainScreen extends StatefulWidget {
@@ -14,6 +15,9 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late Stream<List<String>> _itemsStream;
+  String _selectedLocationName = 'Select Location';
+
+  String locationName = '';
 
   @override
   void initState() {
@@ -24,9 +28,44 @@ class _MainScreenState extends State<MainScreen> {
         );
   }
 
-  // Method to show a dialog for adding a new item
-  void _showAddItemDialog() {
-    final TextEditingController _controller = TextEditingController();
+  // Update the selected location name
+  void _updateSelectedLocationName(String locationName) {
+    setState(() {
+      _selectedLocationName = locationName;
+    });
+  }
+
+  void _saveItemToFirestore(
+    String name,
+    String brand,
+    int quantity,
+    String unit,
+    double price,
+    String location,
+  ) async {
+    await FirebaseFirestore.instance.collection('items').add({
+      'name': name,
+      'brand': brand,
+      'quantity': quantity,
+      'unit': unit,
+      'price': price,
+      'locationName': locationName,
+      // 'locationCoordinates': GeoPoint(
+      //   location['coordinates'].latitude,
+      //   location['coordinates'].longitude,
+      // ),
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Method to show the Add Item dialog
+  void _showAddItemDialog(String selectedLocation) {
+    final TextEditingController itemNameController = TextEditingController();
+    final TextEditingController itemBrandController = TextEditingController();
+    final TextEditingController itemQuantityController =
+        TextEditingController();
+    final TextEditingController itemUnitController = TextEditingController();
+    final TextEditingController itemPriceController = TextEditingController();
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDarkMode ? Colors.grey.shade900 : Colors.white;
@@ -35,26 +74,108 @@ class _MainScreenState extends State<MainScreen> {
 
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: backgroundColor,
           title: Text(
             'Add Item',
             style: TextStyle(color: textColor),
           ),
-          content: TextField(
-            controller: _controller,
-            decoration: InputDecoration(
-              hintText: 'Enter item name',
-              hintStyle: TextStyle(color: textColor.withOpacity(0.6)),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: textColor.withOpacity(0.5)),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: textColor),
-              ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: itemNameController,
+                  decoration: InputDecoration(
+                    labelText: 'Item Name',
+                    labelStyle: TextStyle(color: textColor.withOpacity(0.6)),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: textColor.withOpacity(0.5)),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: textColor),
+                    ),
+                  ),
+                  style: TextStyle(color: textColor),
+                ),
+                TextField(
+                  controller: itemBrandController,
+                  decoration: InputDecoration(
+                    labelText: 'Item Brand',
+                    labelStyle: TextStyle(color: textColor.withOpacity(0.6)),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: textColor.withOpacity(0.5)),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: textColor),
+                    ),
+                  ),
+                  style: TextStyle(color: textColor),
+                ),
+                TextField(
+                  controller: itemQuantityController,
+                  decoration: InputDecoration(
+                    labelText: 'Item Quantity',
+                    labelStyle: TextStyle(color: textColor.withOpacity(0.6)),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: textColor.withOpacity(0.5)),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: textColor),
+                    ),
+                  ),
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: textColor),
+                ),
+                TextField(
+                  controller: itemUnitController,
+                  decoration: InputDecoration(
+                    labelText: 'Unit (e.g., kg)',
+                    labelStyle: TextStyle(color: textColor.withOpacity(0.6)),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: textColor.withOpacity(0.5)),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: textColor),
+                    ),
+                  ),
+                  style: TextStyle(color: textColor),
+                ),
+                TextField(
+                  controller: itemPriceController,
+                  decoration: InputDecoration(
+                    labelText: 'Price',
+                    labelStyle: TextStyle(color: textColor.withOpacity(0.6)),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: textColor.withOpacity(0.5)),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: textColor),
+                    ),
+                  ),
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: textColor),
+                ),
+                SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Location: ',
+                      style: TextStyle(color: textColor),
+                    ),
+                    Flexible(
+                      child: Text(
+                        locationName,
+                        style: TextStyle(color: textColor),
+                        overflow: TextOverflow.visible,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            style: TextStyle(color: textColor),
           ),
           actions: <Widget>[
             TextButton(
@@ -72,10 +193,27 @@ class _MainScreenState extends State<MainScreen> {
                 style: TextStyle(color: buttonTextColor),
               ),
               onPressed: () async {
-                if (_controller.text.isNotEmpty) {
-                  await _firestore
-                      .collection('items')
-                      .add({'name': _controller.text});
+                if (itemNameController.text.isNotEmpty &&
+                    itemBrandController.text.isNotEmpty &&
+                    itemQuantityController.text.isNotEmpty &&
+                    itemUnitController.text.isNotEmpty &&
+                    itemPriceController.text.isNotEmpty) {
+                  final itemName = itemNameController.text;
+                  final itemBrand = itemBrandController.text;
+                  final itemQuantity =
+                      int.tryParse(itemQuantityController.text) ?? 0;
+                  final itemUnit = itemUnitController.text;
+                  final itemPrice =
+                      double.tryParse(itemPriceController.text) ?? 0;
+
+                  _saveItemToFirestore(
+                    itemName,
+                    itemBrand,
+                    itemQuantity,
+                    itemUnit,
+                    itemPrice,
+                    selectedLocation,
+                  );
                   Navigator.of(context).pop();
                 }
               },
@@ -84,6 +222,17 @@ class _MainScreenState extends State<MainScreen> {
         );
       },
     );
+  }
+
+  void _openLocationPicker() async {
+    final selectedLocation = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => LocationPickerScreen()),
+    );
+
+    // if (selectedLocation != null) {
+    _showAddItemDialog(selectedLocation);
+    // }
   }
 
   // Method to handle bottom navigation bar item taps
@@ -217,24 +366,61 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  void _changeLocation() async {
+    locationName = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => LocationPickerScreen()),
+    );
+    print(locationName);
+    _updateSelectedLocationName(locationName);
+  }
+
+  void _deleteItem(String itemId) async {
+    try {
+      await FirebaseFirestore.instance.collection('items').doc(itemId).delete();
+      // Optionally, show a snackbar or dialog to confirm the deletion
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Item deleted successfully')),
+      );
+    } catch (e) {
+      // Handle errors, e.g., network issues
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete item: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final drawerIconColor = isDarkMode ? Colors.grey.shade400 : Colors.black;
-    // final tileColor = isDarkMode ? Colors.grey[850] : Colors.white;
-    final double tileHeight = 70.0;
+    final ribbonColor =
+        isDarkMode ? Colors.grey.shade900 : Color.fromARGB(255, 218, 218, 215);
+    final ribbonTextColor = isDarkMode ? Colors.white : Colors.grey.shade800;
+    final LabelTextColor =
+        isDarkMode ? Colors.grey.shade500 : Colors.grey.shade500;
+    final TileColor = isDarkMode ? Colors.grey.shade900 : Colors.grey.shade100;
+    final itemLabelColor =
+        isDarkMode ? Colors.grey.shade300 : Colors.grey.shade900;
+    final itemDescColor =
+        isDarkMode ? Colors.grey.shade500 : Colors.grey.shade900;
+    final changeButtonColor = isDarkMode
+        ? Color.fromARGB(255, 226, 155, 96)
+        : Color.fromARGB(255, 62, 150, 65);
 
     return Scaffold(
       appBar: AppBar(
         title: Padding(
           padding: EdgeInsets.only(left: 70.0),
-          child: Text(
-            'Shopwise',
-            style: TextStyle(
-              color: isDarkMode
-                  ? Colors.grey.shade400
-                  : Colors.black, // Text color based on theme
-            ),
+          child: Row(
+            children: [
+              Text(
+                'Shopwise',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.grey.shade400 : Colors.black,
+                ),
+              ),
+            ],
           ),
         ),
         toolbarHeight: kToolbarHeight,
@@ -260,104 +446,196 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ),
       drawer: CustomDrawer(),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore.collection('items').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData) {
-            return Center(child: Text('No items found'));
-          }
-
-          final items = snapshot.data!.docs;
-          final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-          final textColor = isDarkMode ? Colors.white : Colors.black;
-          final tileColor = isDarkMode ? Colors.grey[850] : Colors.white;
-          final iconColor = isDarkMode ? Colors.white : Colors.black;
-
-          return ListView.builder(
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              final item = items[index];
-              final itemId = item.id; // Get the document ID
-              final itemName = item['name'] as String;
-
-              return Dismissible(
-                key: Key(itemId),
-                direction: DismissDirection.endToStart,
-                onDismissed: (direction) async {
-                  await _firestore.collection('items').doc(itemId).delete();
-                },
-                background: Container(
-                  color: Colors.redAccent,
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Icon(
-                        Icons.delete,
-                        color: Colors.white,
-                      ),
+      body: Column(
+        children: [
+          Container(
+            margin: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: ribbonColor,
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            padding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 8.0),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.location_on,
+                  color: ribbonTextColor,
+                ),
+                SizedBox(width: 6.0),
+                Text(
+                  'Location: ',
+                  style: TextStyle(
+                    color: ribbonTextColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                SizedBox(width: 3.0),
+                Expanded(
+                  child: Text(
+                    _selectedLocationName,
+                    style: TextStyle(
+                      color: ribbonTextColor,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                TextButton(
+                  onPressed: _changeLocation,
+                  child: Text(
+                    'Change',
+                    style: TextStyle(
+                      color: changeButtonColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
                     ),
                   ),
                 ),
-                child: Container(
-                  margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-                  decoration: BoxDecoration(
-                    color: tileColor, // Set color based on theme
-                    borderRadius: BorderRadius.circular(10.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isDarkMode
-                            ? Colors.black.withOpacity(0.5)
-                            : Colors.grey.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: SizedBox(
-                    height: tileHeight,
-                    child: ListTile(
-                      title: Text(
-                        itemName,
+              ],
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('items').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 19.0),
+                      child: Text(
+                        'List is Empty, Please add a product for comparison',
                         style: TextStyle(
-                            color: textColor), // Set text color based on theme
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                            color: LabelTextColor),
+                        textAlign: TextAlign
+                            .center, // Centers the text within the padding
                       ),
-                      trailing: Padding(
-                        padding: const EdgeInsets.only(right: 10.0),
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.edit,
-                            size: 22.0,
-                            color: iconColor, // Set icon color based on theme
+                    ),
+                  );
+                }
+
+                final items = snapshot.data!.docs;
+
+                return ListView.builder(
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    final itemName = item['name'] as String;
+                    final itemBrand = item['brand'] as String;
+                    final itemQuantity = item['quantity'] as int;
+                    final itemPrice = item['price'] as double;
+                    final itemUnit = item['unit'] as String;
+                    final itemId = item.id;
+
+                    return Slidable(
+                      key: ValueKey(itemId),
+                      endActionPane: ActionPane(
+                        motion: DrawerMotion(),
+                        children: [
+                          SlidableAction(
+                            onPressed: (context) {
+                              _deleteItem(itemId);
+                            },
+                            backgroundColor:
+                                const Color.fromARGB(255, 189, 43, 32),
+                            foregroundColor: Colors.white,
+                            icon: Icons.delete,
+                            padding: EdgeInsets.zero,
+                            flex: 100, // Adjust flex to fit content
                           ),
-                          onPressed: () {
-                            _showEditItemDialog(itemId, itemName);
-                          },
+                        ],
+                      ),
+                      child: Card(
+                        margin: EdgeInsets.symmetric(
+                            vertical: 1.0, horizontal: 1.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                        ),
+                        color: TileColor,
+                        child: Container(
+                          height: 97.0,
+                          padding: EdgeInsets.all(16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      itemName,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15.0,
+                                        color: itemLabelColor,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.0),
+                                    Text(
+                                      'Brand: $itemBrand',
+                                      style: TextStyle(
+                                        color: itemDescColor,
+                                        fontSize: 12.5,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.0),
+                                    Text(
+                                      'Quantity: $itemQuantity $itemUnit',
+                                      style: TextStyle(
+                                        color: itemDescColor,
+                                        fontSize: 12.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(width: 16.0),
+                              Text(
+                                'Rs.${itemPrice.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16.0,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          LatLng? selectedLocation = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => LocationPickerScreen()),
-          );
-          if (selectedLocation != null) {
-            // Handle the selectedLocation here, e.g., update the state or perform an action
-            print('Selected location: $selectedLocation');
+          print("button");
+          if (_selectedLocationName == 'Select Location') {
+            print("Please select Location first");
+            locationName = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => LocationPickerScreen()),
+            );
           }
+          if (locationName != '') {
+            _showAddItemDialog(_selectedLocationName);
+          }
+          _updateSelectedLocationName(locationName);
         },
         child: Icon(Icons.add),
         backgroundColor: Colors.grey.shade800,

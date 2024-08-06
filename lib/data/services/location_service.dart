@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:convert';
 
 class LocationService {
   final String apiKey;
+  // Timer? _debounce;
 
   LocationService(this.apiKey);
 
@@ -88,6 +90,16 @@ class LocationService {
       throw Exception('Failed to get address: $e');
     }
   }
+
+  //  void fetchAddressWithDebounce(LatLng position, Function(String) callback) {
+  //   if (_debounce?.isActive ?? false) _debounce?.cancel();
+  //   _debounce = Timer(const Duration(milliseconds: 500), () {
+  //     getAddress(position).then(callback).catchError((e) {
+  //       //Error handling:
+  //       print('Failed to fetch address: $e');
+  //     });
+  //   });
+  // }
 }
 
 
